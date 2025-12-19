@@ -58,7 +58,7 @@ obstacle_detector_node:
     # 用于过滤异常长宽高比例的bbox 未启用
     max_dimension_ratio: 5.0     # 边界框最大长宽高比例 (最长边/最短边), 范围: [5.0, 10.0]
     
-    # 未完全启用, 调了也可能没用
+    # 未完全启用, future will use
     enable_height_range_filter: false   # 启用高度和范围滤波
     height_limit: 2.0                   # 最大高度限制 (米) - 过滤高空点云, 范围: [0.5, 3.0]
     range_length: 5.0                   # 前后范围 (米) - robot前后方向感兴趣距离, 范围: [0.5, 10.0]
