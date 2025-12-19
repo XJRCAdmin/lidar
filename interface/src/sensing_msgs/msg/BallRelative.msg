@@ -1,0 +1,4 @@
+std_msgs/Header header
+geometry_msgs/Vector3 relative_position
+geometry_msgs/Vector3 relative_velocity
+float64 radius
