@@ -45,14 +45,7 @@ def generate_launch_description():
         executable='obstacle_detector_node',
         name='obstacle_detector_node',
         output='screen',
-        parameters=[{
-        'livox_lidar_topic': "/livox/lidar",
-        'odometry_topic': "/Odometry",
-        'ground_cloud_topic': "/cloud_ground",
-        'cloud_clusters_topic': "/cloud_clusters",
-        'bboxes_marker_topic': "/marker_bboxes",
-        'detected_objects_topic': "/detected_objects",
-        }]
+        parameters=[config_file]
     )
 
     odom_trans_node = Node(

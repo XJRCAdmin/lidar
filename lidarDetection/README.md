@@ -20,6 +20,7 @@ sudo apt install ros-$ROS_DISTRO-pcl-ros ros-$ROS_DISTRO-pcl-conversions libpcl-
 colcon build --symlink-install --paths .
 colcon build --symlink-install --packages-select sensing_msgs
 ```
+![](static/rqt.png)
 
 ## attention
 // 输入的球相对位置话题,目前使用的是obstacle_information_to_baselink的话题,将所有障碍物当作"球"处理了,后续需要调整成真正的球检测话题

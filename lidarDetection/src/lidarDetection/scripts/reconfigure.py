@@ -100,7 +100,7 @@ class ParamTunerNode(Node):
     def __init__(self, signals: RosSignals):
         super().__init__('param_tuner_qt')
         self.signals = signals
-        self.target_node = '/obstacle_detector_node'
+        self.target_node = 'obstacle_detector_node'
         
         self.set_param_client = self.create_client(
             SetParameters, f'{self.target_node}/set_parameters')

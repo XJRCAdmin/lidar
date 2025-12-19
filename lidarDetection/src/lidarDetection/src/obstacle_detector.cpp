@@ -228,7 +228,12 @@ ObstacleDetectorNode::ObstacleDetectorNode() : rclcpp::Node("obstacle_detector")
       rcl_interfaces::msg::SetParametersResult result;
       result.successful = true;
       result.reason = "success";
-
+      for (const auto & param : params) {
+        RCLCPP_INFO(this->get_logger(), "Parameter '%s' changed to new value.", param.get_name().c_str());
+        if (param.get_type() == rclcpp::ParameterType::PARAMETER_DOUBLE) {
+          RCLCPP_INFO(this->get_logger(), "+++++++++++++++ Value: %f +++++++++++", param.as_double());
+        }
+      }
       // Re-read parameters
       this->get_parameter("rotate_x", ROTATE_X);
       this->get_parameter("rotate_y", ROTATE_Y);
@@ -365,14 +370,14 @@ void ObstacleDetectorNode::publishClouds(
   pcl::toROSMsg(*(segmented_clouds.first), *obstacle_cloud);
   obstacle_cloud->header = header;
 
- if (segmented_clouds.first) {
+  if (segmented_clouds.first) {
     auto obstacle_cloud = std::make_unique<sensor_msgs::msg::PointCloud2>();
     pcl::toROSMsg(*(segmented_clouds.first), *obstacle_cloud);
     obstacle_cloud->header = header;
     pub_cloud_clusters_->publish(std::move(obstacle_cloud));
     RCLCPP_INFO(
-      this->get_logger(), "Published obstacles cloud: %zu pts, frame=%s",
-      segmented_clouds.first->size(), header.frame_id.c_str());
+      this->get_logger(), "Published obstacles cloud: %zu pts, frame=%s", segmented_clouds.first->size(),
+      header.frame_id.c_str());
   } else {
     RCLCPP_WARN(this->get_logger(), "Obstacle cloud pointer is null, not publishing.");
   }
@@ -383,8 +388,8 @@ void ObstacleDetectorNode::publishClouds(
     ground_cloud->header = header;
     pub_cloud_ground_->publish(std::move(ground_cloud));
     RCLCPP_INFO(
-      this->get_logger(), "Published ground cloud: %zu pts, frame=%s",
-      segmented_clouds.second->size(), header.frame_id.c_str());
+      this->get_logger(), "Published ground cloud: %zu pts, frame=%s", segmented_clouds.second->size(),
+      header.frame_id.c_str());
   } else {
     RCLCPP_WARN(this->get_logger(), "Ground cloud pointer is null, not publishing.");
   }
