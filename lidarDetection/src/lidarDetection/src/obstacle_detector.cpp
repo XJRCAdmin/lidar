@@ -150,7 +150,7 @@ ObstacleDetectorNode::ObstacleDetectorNode() : rclcpp::Node("obstacle_detector")
     this->create_publisher<visualization_msgs::msg::MarkerArray>(marker_bboxes_topic, rclcpp::QoS(1));
   pub_objects_ = this->create_publisher<lidar_detection::msg::ObstacleDetectionArray>(objects_topic, rclcpp::QoS(1));
 
-  // Declare dynamic parameters used later (so they exist). Defaults chosen to mirror previous code.
+  // Declare dynamic parameters - 默认值与YAML文件保持一致
   this->declare_parameter<double>("rotate_x", 0.0);
   this->declare_parameter<double>("rotate_y", 0.0);
   this->declare_parameter<double>("rotate_z", 0.0);
@@ -169,18 +169,19 @@ ObstacleDetectorNode::ObstacleDetectorNode() : rclcpp::Node("obstacle_detector")
   this->declare_parameter<double>("roi_min_y", -4.0);
   this->declare_parameter<double>("roi_min_z", -0.5);
   this->declare_parameter<double>("ground_threshold", 0.3);
-  this->declare_parameter<double>("cluster_threshold", 0.5);
-  this->declare_parameter<int>("cluster_max_size", 50000);
+  this->declare_parameter<double>("cluster_threshold", 0.6);
+  this->declare_parameter<int>("cluster_max_size", 500);
   this->declare_parameter<int>("cluster_min_size", 10);
   this->declare_parameter<double>("displacement_threshold", 1.0);
-  this->declare_parameter<double>("iou_threshold", 0.5);
+  this->declare_parameter<double>("iou_threshold", 1.0);
   this->declare_parameter<bool>("enable_statistical_filter", true);
-  this->declare_parameter<int>("statistical_nb_neighbors", 50);
+  this->declare_parameter<int>("statistical_nb_neighbors", 20);
   this->declare_parameter<double>("statistical_std_ratio", 1.0);
+  this->declare_parameter<double>("max_dimension_ratio", 5.0);
   this->declare_parameter<bool>("enable_height_range_filter", false);
-  this->declare_parameter<double>("height_limit", 2.5);
-  this->declare_parameter<double>("range_length", 30.0);
-  this->declare_parameter<double>("range_width", 10.0);
+  this->declare_parameter<double>("height_limit", 2.0);
+  this->declare_parameter<double>("range_length", 5.0);
+  this->declare_parameter<double>("range_width", 5.0);
 
   // Read initial dynamic parameters into globals
   this->get_parameter("rotate_x", ROTATE_X);
@@ -274,7 +275,6 @@ ObstacleDetectorNode::ObstacleDetectorNode() : rclcpp::Node("obstacle_detector")
 void ObstacleDetectorNode::lidarPointsCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr lidar_points)
 {
   auto logger = this->get_logger();
-  RCLCPP_INFO(logger, "=================================================");
   RCLCPP_INFO(
     logger, "Input cloud: frame=%s, width=%u, height=%u, fields=%zu", lidar_points->header.frame_id.c_str(),
     static_cast<unsigned int>(lidar_points->width), static_cast<unsigned int>(lidar_points->height),
@@ -338,7 +338,6 @@ void ObstacleDetectorNode::lidarPointsCallback(const sensor_msgs::msg::PointClou
   RCLCPP_INFO(
     logger, "The obstacle_detector_node found %d obstacles in %.3f second", static_cast<int>(prev_boxes_.size()),
     static_cast<float>(elapsed_time.count() / 1000.0f));
-  RCLCPP_INFO(logger, "=======================================");
 }
 
 void ObstacleDetectorNode::odomCallback(const nav_msgs::msg::Odometry::ConstSharedPtr odom)

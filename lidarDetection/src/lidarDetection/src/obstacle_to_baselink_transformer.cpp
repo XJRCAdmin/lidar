@@ -37,7 +37,7 @@ public:
     target_frame_ = this->declare_parameter<std::string>("target_frame", "base_link");
 
     obstacle_lidar_sub_ = this->create_subscription<lidar_detection::msg::ObstacleDetectionArray>(
-      obstacle_lidar_topic_, 10, std::bind(&ObstacleToBaselinkNode::ObstacleCallback, this, _1));
+      obstacle_lidar_topic_, 10, std::bind(&ObstacleToBaselinkNode::ObstacleCallback, this, std::placeholders::_1));
     obstacle_to_baselink_pub_ =
       this->create_publisher<lidar_detection::msg::ObstacleDetectionArray>(obstacle_baselink_topic_, 10);
 

@@ -5,13 +5,13 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/vector3_stamped.hpp"
-#include "lidar_detection/msg/ball_relative.hpp"
-#include "lidar_detection/msg/ball_state.hpp"
 #include "lidar_detection/msg/obstacle_detection.hpp"
 #include "lidar_detection/msg/obstacle_detection_array.hpp"
-#include "lidar_detection/msg/robot_state.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "sensing_msgs/msg/ball_relative.hpp"
+#include "sensing_msgs/msg/ball_state.hpp"
+#include "sensing_msgs/msg/robot_state.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
@@ -29,11 +29,11 @@ private:
   std::string target_frame_;
   double robot_radius_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
-  rclcpp::Publisher<lidar_detection::msg::RobotState>::SharedPtr robot_state_pub_;
+  rclcpp::Publisher<sensing_msgs::msg::RobotState>::SharedPtr robot_state_pub_;
   rclcpp::Subscription<lidar_detection::msg::ObstacleDetectionArray>::SharedPtr relative_ball_sub_;
-  rclcpp::Publisher<lidar_detection::msg::BallRelative>::SharedPtr relative_ball_pub_;
+  rclcpp::Publisher<sensing_msgs::msg::BallRelative>::SharedPtr relative_ball_pub_;
   rclcpp::Subscription<lidar_detection::msg::ObstacleDetectionArray>::SharedPtr map_ball_sub_;
-  rclcpp::Publisher<lidar_detection::msg::BallState>::SharedPtr map_ball_pub_;
+  rclcpp::Publisher<sensing_msgs::msg::BallState>::SharedPtr map_ball_pub_;
 
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
@@ -61,21 +61,21 @@ public:
 
     odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
       input_topic_odom_, 10, std::bind(&InterfaceNode::odomCallback, this, std::placeholders::_1));
-    robot_state_pub_ = this->create_publisher<lidar_detection::msg::RobotState>(output_topic_robot_state_, 10);
+    robot_state_pub_ = this->create_publisher<sensing_msgs::msg::RobotState>(output_topic_robot_state_, 10);
 
     // 后续也需要调整
     relative_ball_sub_ = this->create_subscription<lidar_detection::msg::ObstacleDetectionArray>(
       input_relative_ball_topic_, 10, std::bind(&InterfaceNode::ObstacleRelativeCallback, this, std::placeholders::_1));
-    relative_ball_pub_ = this->create_publisher<lidar_detection::msg::BallRelative>(output_relative_ball_topic_, 10);
+    relative_ball_pub_ = this->create_publisher<sensing_msgs::msg::BallRelative>(output_relative_ball_topic_, 10);
 
     map_ball_sub_ = this->create_subscription<lidar_detection::msg::ObstacleDetectionArray>(
       input_map_ball_topic_, 10, std::bind(&InterfaceNode::ObstacleMapCallback, this, std::placeholders::_1));
-    map_ball_pub_ = this->create_publisher<lidar_detection::msg::BallState>(output_map_ball_topic_, 10);
+    map_ball_pub_ = this->create_publisher<sensing_msgs::msg::BallState>(output_map_ball_topic_, 10);
   }
 
   void odomCallback(const nav_msgs::msg::Odometry::SharedPtr odom_msg)
   {
-    lidar_detection::msg::RobotState robot_state;
+    sensing_msgs::msg::RobotState robot_state;
     robot_state.header = odom_msg->header;
     robot_state.pose = odom_msg->pose.pose;
     robot_state.twist = odom_msg->twist.twist;
@@ -105,7 +105,7 @@ public:
     }
 
     const auto & best_detection = ball_msg->detections[best_index];
-    lidar_detection::msg::BallRelative msg;
+    sensing_msgs::msg::BallRelative msg;
     msg.header = best_detection.detection.header;
 
     msg.relative_position.x = best_detection.detection.bbox.center.position.x;
@@ -172,7 +172,7 @@ public:
       return;
     }
 
-    lidar_detection::msg::BallState ball_state;
+    sensing_msgs::msg::BallState ball_state;
     ball_state.header = map_pose.header;
     ball_state.pose = map_pose.pose;
     ball_state.twist.linear = map_vel.vector;

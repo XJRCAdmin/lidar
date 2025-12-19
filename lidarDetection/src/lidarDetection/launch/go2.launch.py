@@ -10,17 +10,24 @@ from launch_ros.actions import Node
 def generate_launch_description():
     lidar_detection_pkg_share = get_package_share_directory('lidar_detection')
 
-    # static transform: base_link -> lidar_body
+    config_file = os.path.join(
+        lidar_detection_pkg_share,
+        'config',
+        'go2.yaml'
+    )
+
+    # static transform: lidar_body -> base_link
     static_tf_lidar_to_base = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
-        name='base_link_to_lidar_body_publisher',
+        name='lidar_body_to_base_link_publisher',
         output='screen',
         arguments=[
             # x, y, z, roll, pitch, yaw, parent_frame, child_frame
-            '-0.1', '0', '-0.2', '0', '0', '0', 'base_link', 'lidar_body'
+            '-0.1', '0', '-0.2', '0', '0', '0', 'lidar_body', 'base_link'
         ]
     )
+    
     # static transform: map -> odom
     static_tf_odom_to_map = Node(
         package='tf2_ros',
@@ -33,80 +40,45 @@ def generate_launch_description():
         ]
     )
 
-    # obstacle_detector standalone node
     obstacle_detector_node = Node(
         package='lidar_detection',
         executable='obstacle_detector_node',
         name='obstacle_detector_node',
         output='screen',
-        parameters=[{
-            'lidar_points_topic': '/livox/lidar', 
-            'odom_topic': '/Odometry',
-            'cloud_ground_topic': '/cloud_ground',
-            'cloud_clusters_topic': '/cloud_clusters',
-            'marker_bboxes_topic': '/marker_bboxes',
-            'objects_topic': '/detected_objects',
-            'bbox_target_frame': 'lidar_body',
-            'min_x': -0.01, 'max_x': 0.01,
-            'min_y': -0.01, 'max_y': 0.01,
-            'min_z': -0.01, 'max_z': 0.01,
-            'robot_radius': 0.2, # robot 半径
-        }]
+        parameters=[config_file]
     )
 
-    # odom_trans standalone node
     odom_trans_node = Node(
         package='lidar_detection',
         executable='odom_trans_node',
         name='odom_trans_node',
         output='screen',
-        parameters=[{
-            'input_odom_topic': '/Odometry',
-            'output_odom_topic': '/odom_base_link',
-            'source_frame': 'lidar_body',
-            'target_frame': 'base_link',
-        }]
+        parameters=[config_file]
     )
 
-    # obstacle_to_baselink standalone node
     obstacle_to_baselink_node = Node(
         package='lidar_detection',
         executable='obstacle_to_baselink_node',
         name='obstacle_to_baselink_node',
         output='screen',
-        parameters=[{
-            'obstacle_lidar_topic': '/detected_objects',
-            'obstacle_baselink_topic': '/obstacle_information_in_baselink',
-            'source_frame': 'lidar_body',
-            'target_frame': 'base_link',
-        }]
+        parameters=[config_file]
     )
 
-    # InterfaceNode
     interface_node = Node(
         package='lidar_detection',
         executable='interface_node',
         name='interface_node',
         output='screen',
-        parameters=[{
-            'input_topic_odom': '/odom_base_link',
-            'output_topic_robot_state': '/robot_state',
-            'input_relative_ball_topic': '/obstacle_information_in_baselink',
-            'output_relative_ball_topic': '/ball_relative_topic',
-            'input_map_ball_topic': '/obstacle_information_in_baselink',
-            'output_map_ball_topic': '/ball_map_topic',
-            'source_frame': 'base_link',
-            'target_frame': 'base_link',
-            'robot_radius': 0.5, # robot 半径
-        }]
+        parameters=[config_file]
     )
 
-    rqt_reconfigure_node = Node(
-        package='rqt_reconfigure',
-        executable='rqt_reconfigure',
-        name='rqt_reconfigure',
-        output='screen'
-    )
+    # rqt_reconfigure (可选 - 用于动态调参)
+    # rqt_reconfigure_node = Node(
+    #     package='rqt_reconfigure',
+    #     executable='rqt_reconfigure',
+    #     name='rqt_reconfigure',
+    #     output='screen'
+    # )
 
     # rviz2
     rviz_config_file = PathJoinSubstitution(
@@ -121,22 +93,28 @@ def generate_launch_description():
     )
 
     delayed_interface_node1 = TimerAction(
-        period=2.0,
+        period=2.5,
         actions=[
             odom_trans_node,
-            obstacle_to_baselink_node]
+            obstacle_to_baselink_node
+        ]
     )
+    
     delayed_interface_node2 = TimerAction(
-        period=2.0,
+        period=3.5,
         actions=[
             interface_node,
             # rqt_reconfigure_node
-            ]
+        ]
+    )
+    delayed_obstacle_detector = TimerAction(
+        period=1.5,
+        actions=[obstacle_detector_node]
     )
     return LaunchDescription([
         static_tf_lidar_to_base,
         static_tf_odom_to_map,
-        obstacle_detector_node,
+        delayed_obstacle_detector,
         delayed_interface_node1,
         delayed_interface_node2,
         rviz_node,
