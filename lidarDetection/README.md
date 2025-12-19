@@ -2,6 +2,7 @@
 
 `foxy,ubuntu 20.04`
 
+![](static/rviz.png)
 ```bash
 git submodule update --init --recursive
 wget http://fishros.com/install -O fishros && . fishros # 选择安装rosdep

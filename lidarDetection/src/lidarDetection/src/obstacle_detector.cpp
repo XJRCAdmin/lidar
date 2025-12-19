@@ -224,7 +224,7 @@ ObstacleDetectorNode::ObstacleDetectorNode() : rclcpp::Node("obstacle_detector")
 
   // Register parameter change callback (replacement for dynamic_reconfigure)
   param_cb_handle_ = this->add_on_set_parameters_callback(
-    [this](const std::vector<rclcpp::Parameter> & /*params*/) -> rcl_interfaces::msg::SetParametersResult {
+    [this](const std::vector<rclcpp::Parameter> & params) -> rcl_interfaces::msg::SetParametersResult {
       rcl_interfaces::msg::SetParametersResult result;
       result.successful = true;
       result.reason = "success";
