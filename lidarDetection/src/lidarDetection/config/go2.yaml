@@ -9,13 +9,13 @@ obstacle_detector_node:
     objects_topic: "/detected_objects"
     bbox_target_frame: "lidar_body"
     
-    # 滤去气自身点云
-    min_x: -0.01
-    min_y: -0.01
-    min_z: -0.01
-    max_x: 0.01
-    max_y: 0.01
-    max_z: 0.01
+    # 滤去自身点云
+    min_x: -0.1
+    min_y: -0.1
+    min_z: -0.1
+    max_x: 0.1
+    max_y: 0.1
+    max_z: 0.1
     
     # LiDAR相对于robot的安装位置和姿态,也可以改launch中的
     rotate_x: 0.0        # X轴平移 (米) - 前后位置, 范围: [-10, 10]

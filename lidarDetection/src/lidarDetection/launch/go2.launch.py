@@ -45,7 +45,14 @@ def generate_launch_description():
         executable='obstacle_detector_node',
         name='obstacle_detector_node',
         output='screen',
-        parameters=[config_file]
+        parameters=[{
+        'livox_lidar_topic': "/livox/lidar",
+        'odometry_topic': "/Odometry",
+        'ground_cloud_topic': "/cloud_ground",
+        'cloud_clusters_topic': "/cloud_clusters",
+        'bboxes_marker_topic': "/marker_bboxes",
+        'detected_objects_topic': "/detected_objects",
+        }]
     )
 
     odom_trans_node = Node(
@@ -93,7 +100,7 @@ def generate_launch_description():
     )
 
     delayed_interface_node1 = TimerAction(
-        period=2.5,
+        period=3.5,
         actions=[
             odom_trans_node,
             obstacle_to_baselink_node
@@ -101,14 +108,14 @@ def generate_launch_description():
     )
     
     delayed_interface_node2 = TimerAction(
-        period=3.5,
+        period=5.0,
         actions=[
             interface_node,
             # rqt_reconfigure_node
         ]
     )
     delayed_obstacle_detector = TimerAction(
-        period=1.5,
+        period=2.5,
         actions=[obstacle_detector_node]
     )
     return LaunchDescription([

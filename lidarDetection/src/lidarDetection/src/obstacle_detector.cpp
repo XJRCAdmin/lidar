@@ -289,6 +289,11 @@ void ObstacleDetectorNode::lidarPointsCallback(const sensor_msgs::msg::PointClou
   pcl::fromROSMsg(*lidar_points, *raw_cloud);
   RCLCPP_INFO(logger, "Raw points: %zu", raw_cloud->size());
 
+  if (raw_cloud->empty()) {
+    RCLCPP_WARN(logger, "Raw cloud is empty, skipping processing");
+    return;
+  }
+
   // Apply installation transform
   install_transform = Eigen::Affine3f::Identity();
   install_transform.rotate(Eigen::AngleAxisf(ROTATE_ROLL, Eigen::Vector3f::UnitX()));
@@ -360,8 +365,29 @@ void ObstacleDetectorNode::publishClouds(
   pcl::toROSMsg(*(segmented_clouds.first), *obstacle_cloud);
   obstacle_cloud->header = header;
 
-  pub_cloud_ground_->publish(std::move(ground_cloud));
-  pub_cloud_clusters_->publish(std::move(obstacle_cloud));
+ if (segmented_clouds.first) {
+    auto obstacle_cloud = std::make_unique<sensor_msgs::msg::PointCloud2>();
+    pcl::toROSMsg(*(segmented_clouds.first), *obstacle_cloud);
+    obstacle_cloud->header = header;
+    pub_cloud_clusters_->publish(std::move(obstacle_cloud));
+    RCLCPP_INFO(
+      this->get_logger(), "Published obstacles cloud: %zu pts, frame=%s",
+      segmented_clouds.first->size(), header.frame_id.c_str());
+  } else {
+    RCLCPP_WARN(this->get_logger(), "Obstacle cloud pointer is null, not publishing.");
+  }
+
+  if (segmented_clouds.second) {
+    auto ground_cloud = std::make_unique<sensor_msgs::msg::PointCloud2>();
+    pcl::toROSMsg(*(segmented_clouds.second), *ground_cloud);
+    ground_cloud->header = header;
+    pub_cloud_ground_->publish(std::move(ground_cloud));
+    RCLCPP_INFO(
+      this->get_logger(), "Published ground cloud: %zu pts, frame=%s",
+      segmented_clouds.second->size(), header.frame_id.c_str());
+  } else {
+    RCLCPP_WARN(this->get_logger(), "Ground cloud pointer is null, not publishing.");
+  }
 
   RCLCPP_INFO(
     this->get_logger(), "Publish clouds: ground=%u pts, obstacles=%u pts, frame=%s",

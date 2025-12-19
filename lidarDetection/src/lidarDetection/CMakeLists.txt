@@ -27,7 +27,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(vision_msgs REQUIRED)
-find_package(sensing_msgs REQUIRED)
+# find_package(sensing_msgs REQUIRED)
 
 set(dependencies
   rclcpp
@@ -40,16 +40,15 @@ set(dependencies
   tf2_ros
   tf2_geometry_msgs
   vision_msgs
-  sensing_msgs
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ObstacleDetection.msg"
   "msg/ObstacleDetectionArray.msg"
-  # "msg/BallRelative.msg"
-  # "msg/RobotState.msg"
-  # "msg/BallState.msg"
-  DEPENDENCIES vision_msgs
+  "msg/BallRelative.msg"
+  "msg/RobotState.msg"
+  "msg/BallState.msg"
+  DEPENDENCIES vision_msgs std_msgs geometry_msgs
 )
 
 add_executable(obstacle_detector_node
@@ -119,7 +118,7 @@ install(TARGETS
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 install(DIRECTORY include/ DESTINATION include/)
-install(DIRECTORY launch rviz scripts DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY launch rviz scripts config DESTINATION share/${PROJECT_NAME})
 # install(PROGRAMS
 #   scripts/param_tuner.py
 #   DESTINATION lib/${PROJECT_NAME}

@@ -18,6 +18,7 @@ sudo apt install ros-$ROS_DISTRO-pcl-ros ros-$ROS_DISTRO-pcl-conversions libpcl-
 
 ```bash
 colcon build --symlink-install --paths .
+colcon build --symlink-install --packages-select sensing_msgs
 ```
 
 ## attention
