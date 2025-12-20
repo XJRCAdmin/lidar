@@ -137,7 +137,7 @@ typename pcl::PointCloud<PointT>::Ptr ObstacleDetector<PointT>::filterCloud(
 
   // Cropping the ROI
   typename pcl::PointCloud<PointT>::Ptr cloud_roi(new pcl::PointCloud<PointT>);
-  pcl::CropBox<PointT> region(true);
+  pcl::CropBox<PointT> region(false);
   region.setMin(min_pt);
   region.setMax(max_pt);
   region.setInputCloud(cloud_filtered);
