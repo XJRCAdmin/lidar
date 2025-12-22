@@ -345,9 +345,8 @@ void ObstacleDetectorNode::lidarPointsCallback(const sensor_msgs::msg::PointClou
 
   const auto end_time = std::chrono::steady_clock::now();
   const auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-  RCLCPP_INFO(
-    logger, "The obstacle_detector_node found %d obstacles in %.3f second", static_cast<int>(prev_boxes_.size()),
-    static_cast<float>(elapsed_time.count() / 1000.0f));
+ 
+  FrequencyDebug(start_time, end_time, logger);
 }
 
 void ObstacleDetectorNode::odomCallback(const nav_msgs::msg::Odometry::ConstSharedPtr odom)

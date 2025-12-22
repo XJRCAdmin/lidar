@@ -2,7 +2,7 @@
 
 #include <limits>
 #include <rclcpp/rclcpp.hpp>
-
+#include <chrono>
 void ClusteringDebug(
   const std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> & cloud_clusters, double CLUSTER_THRESH, int CLUSTER_MIN_SIZE,
   int CLUSTER_MAX_SIZE, const rclcpp::Logger & logger)
@@ -72,5 +72,31 @@ void ConvexHullDebug(
     } else {
       RCLCPP_WARN(logger, "All convex hulls are empty!");
     }
+  }
+}
+
+void FrequencyDebug(
+  const std::chrono::steady_clock::time_point & start_time, 
+  const std::chrono::steady_clock::time_point & end_time, 
+  const rclcpp::Logger & logger)
+{
+  static int frame_count = 0;
+  static std::chrono::steady_clock::time_point last_fps_print_time = std::chrono::steady_clock::now();
+  const auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+  
+  frame_count++;
+  
+  const auto current_time = std::chrono::steady_clock::now();
+  const auto time_since_last_print = std::chrono::duration_cast<std::chrono::milliseconds>(
+      current_time - last_fps_print_time);
+  
+  if (time_since_last_print.count() >= 1000) {
+    const double fps = static_cast<double>(frame_count) * 1000.0 / time_since_last_print.count();
+    
+    RCLCPP_INFO(logger, "Detection FPS: %.2f, Average processing time: %.2f ms/frame", 
+                fps, static_cast<double>(elapsed_time.count()));
+    
+    frame_count = 0;
+    last_fps_print_time = current_time;
   }
 }

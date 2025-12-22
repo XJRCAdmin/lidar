@@ -30,3 +30,13 @@ ROS2 foxy没有像ROS1 的dynamic_reconfigure package,所以这里使用了一�
 ## attention
 // 输入的球相对位置话题,目前使用的是obstacle_information_to_baselink的话题,将所有障碍物当作"球"处理了,后续需要调整成真正的球检测话题
 input_ball_topic_ = this->declare_parameter<std::string>("input_ball_topic", "/obstacle_information_to_baselink");
+
+当调整livox_ros_driver2的发布频率时,每一帧接收点云数量如下表所示:
+
+| publish_freq |actual_publish_freq| pointcloud_num_per_frame |
+|--------------|-------------------|--------------------------|
+| 20.0         | 17.11             | Raw points: 9888         |
+| 10.0         | 8.55 - 7.多       | Raw points: 19768        |
+| 15.0         | 12.77- 13.76      | Raw points: 13252        |
+
+ROI filter 之后就只有几百个点云了,400 300 左右.
