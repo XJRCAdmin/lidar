@@ -7,8 +7,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <m_detector/DynObjFilter.h>
 
-#define PI_MATH (3.14159f)
-
 void DynObjFilter::init(const rclcpp::Node::SharedPtr& node)
 {
     node->declare_parameter<double>("dyn_obj/buffer_delay", 0.1);
@@ -111,7 +109,7 @@ void DynObjFilter::init(const rclcpp::Node::SharedPtr& node)
     node->declare_parameter<float>("dyn_obj/hor_resolution_max", 0.0025f);
     node->declare_parameter<float>("dyn_obj/buffer_dur", 0.1f);
     node->declare_parameter<int>("dyn_obj/point_index", 0);
-    node->declare_parameter<string>("dyn_obj/frame_id", "camera_init");
+    node->declare_parameter<string>("dyn_obj/frame_id", "odom");
     node->declare_parameter<string>("dyn_obj/time_file", "");
     node->declare_parameter<string>("dyn_obj/time_breakdown_file", "");
 
@@ -145,14 +143,14 @@ void DynObjFilter::init(const rclcpp::Node::SharedPtr& node)
 
     if (pcl_his_list.empty())
     {
-        auto first_frame = std::make_shared<PointCloudXYZI>();
+        PointCloudXYZI::Ptr first_frame(new PointCloudXYZI());
         first_frame->reserve(400000);
         pcl_his_list.push_back(first_frame);
 
-        laserCloudSteadObj_hist = std::make_shared<PointCloudXYZI>();
-        laserCloudSteadObj = std::make_shared<PointCloudXYZI>();
-        laserCloudDynObj = std::make_shared<PointCloudXYZI>();
-        laserCloudDynObj_world = std::make_shared<PointCloudXYZI>();
+        laserCloudSteadObj_hist.reset(new PointCloudXYZI());
+        laserCloudSteadObj.reset(new PointCloudXYZI());
+        laserCloudDynObj.reset(new PointCloudXYZI());
+        laserCloudDynObj_world.reset(new PointCloudXYZI());
 
         int xy_ind[2] = {-1, 1};
         for (int ind_hor = 0; ind_hor < 2 * hor_num + 1; ++ind_hor)
@@ -219,14 +217,14 @@ void DynObjFilter::filter(PointCloudXYZI::Ptr feats_undistort,
     double t00 = omp_get_wtime();
     time_search = time_research = time_search_0 = time_build = time_total = time_other0 = 0.0;
     time_interp1 = time_interp2 = 0;
-    int num_build = 0, num_search_0 = 0, num_research = 0;
+    // int num_build = 0, num_search_0 = 0, num_research = 0;
 
     if (feats_undistort == nullptr) return;
     int size = static_cast<int>(feats_undistort->points.size());
 
     if (debug_en)
     {
-        laserCloudSteadObj_hist = std::make_shared<PointCloudXYZI>();
+        laserCloudSteadObj_hist.reset(new PointCloudXYZI());
         laserCloudSteadObj_hist->reserve(20 * size);
     }
 
@@ -237,15 +235,15 @@ void DynObjFilter::filter(PointCloudXYZI::Ptr feats_undistort,
     dyn_tag_cluster.reserve(size);
     dyn_tag_cluster.resize(size);
 
-    laserCloudDynObj = std::make_shared<PointCloudXYZI>();
+    laserCloudDynObj.reset(new PointCloudXYZI());
     laserCloudDynObj->reserve(size);
-    laserCloudDynObj_world = std::make_shared<PointCloudXYZI>();
+    laserCloudDynObj_world.reset(new PointCloudXYZI());
     laserCloudDynObj_world->reserve(size);
-    laserCloudSteadObj = std::make_shared<PointCloudXYZI>();
+    laserCloudSteadObj.reset(new PointCloudXYZI());
     laserCloudSteadObj->reserve(size);
-    laserCloudDynObj_clus = std::make_shared<PointCloudXYZI>();
+    laserCloudDynObj_clus.reset(new PointCloudXYZI()); 
     laserCloudDynObj_clus->reserve(size);
-    laserCloudSteadObj_clus = std::make_shared<PointCloudXYZI>();
+    laserCloudSteadObj_clus.reset(new PointCloudXYZI());   
     laserCloudSteadObj_clus->reserve(size);
 
     std::ofstream out;
@@ -283,9 +281,9 @@ void DynObjFilter::filter(PointCloudXYZI::Ptr feats_undistort,
         time_proj[i] = 0.0;
     }
 
-    int case2_num = 0;
+    // int case2_num = 0;
     double t0 = omp_get_wtime();
-    double time_case1 = 0, time_case2 = 0, time_case3 = 0;
+    // double time_case1 = 0, time_case2 = 0, time_case3 = 0;
 
     pcl::PointCloud<PointType> raw_points_world;
     raw_points_world.reserve(size);
@@ -403,9 +401,9 @@ void DynObjFilter::filter(PointCloudXYZI::Ptr feats_undistort,
     double clus_before = omp_get_wtime();
 
     std_msgs::msg::Header header_clus;
-    // convert scan_end_time (double seconds) to builtin_interfaces::msg::Time safely
-    rclcpp::Time stamp_ns(static_cast<int64_t>(scan_end_time * 1e9));
-    header_clus.stamp = stamp_ns.to_msg();
+    int64_t nsec = static_cast<int64_t>(scan_end_time * 1000000000LL);
+    header_clus.stamp.sec = static_cast<int32_t>(nsec / 1000000000LL);
+    header_clus.stamp.nanosec = static_cast<uint32_t>(nsec % 1000000000LL);
     header_clus.frame_id = frame_id;
 
     if (cluster_coupled || cluster_future)
@@ -542,7 +540,7 @@ void DynObjFilter::filter(PointCloudXYZI::Ptr feats_undistort,
 
     Points2Buffer(points, index);
 
-    double t4 = omp_get_wtime();
+    // double t4 = omp_get_wtime();
     if (!time_file.empty()) time_out << omp_get_wtime() - t3 << " ";
 
     Buffer2DepthMap(scan_end_time);
@@ -665,7 +663,7 @@ void DynObjFilter::Buffer2DepthMap(double cur_time)
         {
             if (depth_map_list.empty())
             {
-                if (depth_map_list.size() < max_depth_map_num)
+                if (depth_map_list.size() < static_cast<size_t>(max_depth_map_num))
                 {
                     map_index++;
                     DepthMap::Ptr new_map =
@@ -683,7 +681,7 @@ void DynObjFilter::Buffer2DepthMap(double cur_time)
                      depth_map_dur - frame_dur / 2.0)
             {
                 map_index++;
-                if (depth_map_list.size() == max_depth_map_num)
+                if (depth_map_list.size() == static_cast<size_t>(max_depth_map_num))
                 {
                     depth_map_list.front()->Reset(point->rot, point->transl,
                                                   point->time, map_index);
@@ -801,7 +799,7 @@ void DynObjFilter::SphericalProjection(point_soph &p,
 {
     const int idx = depth_index % HASH_PRIM;
 
-    if (std::fabs(p.last_vecs) > 1e-5)
+    if (p.last_vecs[idx].squaredNorm() > 1e-10f)
     {
         p_spherical.vec = p.last_vecs[idx];
         p_spherical.hor_ind = p.last_positions[idx][0];
@@ -1247,10 +1245,154 @@ float DynObjFilter::DepthInterpolationStatic(point_soph & p, int map_index, cons
     return -2.0f;
 }
 
+
+bool  DynObjFilter::Case2(point_soph & p)
+{   
+    if(dataset == 0 && p.is_distort) return false;
+    int first_i = depth_map_list.size();
+    first_i -= 1;
+    if(first_i < 0) return false;
+    point_soph p_spherical = p;   
+    SphericalProjection(p, depth_map_list[first_i]->map_index, depth_map_list[first_i]->project_R, depth_map_list[first_i]->project_T, p_spherical);  
+    if (fabs(p_spherical.hor_ind) >= MAX_1D || fabs(p_spherical.ver_ind) >= MAX_1D_HALF || p_spherical.vec(2) < 0.0f || \
+        p_spherical.position < 0 || p_spherical.position >= MAX_2D_N)
+    {
+        p.dyn = INVALID;
+        return false;
+    }
+    int cur_occ_times = 0;
+    if (Case2Enter(p_spherical, *depth_map_list[first_i]))
+    {
+        if (!Case2MapConsistencyCheck(p_spherical, *depth_map_list[first_i], case2_interp_en))
+        {
+            double ti = 0;
+            float vi = 0; 
+            float min_hor = occ_hor_thr2, min_ver = occ_ver_thr2;
+            bool map_cons = true;    
+            for (int ind_hor = -occ_hor_num2; ind_hor <= occ_hor_num2; ind_hor ++)
+            {
+                for (int ind_ver = -occ_ver_num2; ind_ver <= occ_ver_num2; ind_ver ++)
+                {   
+                    int pos_new = ((p_spherical.hor_ind + ind_hor)%MAX_1D) * MAX_1D_HALF + ((p_spherical.ver_ind +ind_ver)%MAX_1D_HALF);       
+                    if (pos_new < 0 || pos_new >= MAX_2D_N)  continue;
+                    const vector<point_soph*> & points_in_pixel = depth_map_list[first_i]->depth_map[pos_new];                    
+                    if (depth_map_list[first_i]->min_depth_all[pos_new] > p_spherical.vec(2))
+                    {
+                        continue;
+                    }   
+                    for (int k = 0; k < points_in_pixel.size() && map_cons; k++)
+                    {
+                        const point_soph*  p_occ = points_in_pixel[k];                   
+                        if(Case2IsOccluded(p_spherical, *p_occ) && Case2DepthConsistencyCheck(*p_occ, *depth_map_list[first_i]))
+                        {                        
+                            cur_occ_times = 1;
+                            if(cur_occ_times >= occluded_times_thr2) break;
+                            ti = (p_occ->time + p.time)/2;
+                            vi = (p_spherical.vec(2) - p_occ->vec(2))/(p.time - p_occ->time);
+                            p.occu_index[0] = depth_map_list[first_i]->map_index;
+                            p.occu_index[1] = pos_new;
+                            p.occu_index[2] = k;
+                            p.occ_vec = p_spherical.vec;
+                            p.occu_times = cur_occ_times;
+                            point_soph  p0 = p;
+                            point_soph p1 = *points_in_pixel[k];                          
+                            int i = depth_map_list.size();
+                            i = i - 2;
+                            V3D t1, t2;
+                            t1.setZero();
+                            t2.setZero();
+                            while(i >= 0)
+                            {                              
+                                if(p1.occu_index[0] == -1 || p1.occu_index[0] < depth_map_list.front()->map_index)
+                                {
+                                    SphericalProjection(p1, depth_map_list[i]->map_index, depth_map_list[i]->project_R, depth_map_list[i]->project_T, p1);
+                                    if(Case2SearchPointOccludingP(p1, *depth_map_list[i]))
+                                    {
+                                        p1.occ_vec = p1.vec;
+                                    }
+                                    else
+                                    {
+                                        break;
+                                    }                                   
+                                }                                
+                                i = p1.occu_index[0]-depth_map_list.front()->map_index;
+                                point_soph*  p2 = depth_map_list[i]->depth_map[p1.occu_index[1]][p1.occu_index[2]];                                   
+                                SphericalProjection(p, depth_map_list[i]->map_index, depth_map_list[i]->project_R, depth_map_list[i]->project_T, p);
+                                if(Case2MapConsistencyCheck(p, *depth_map_list[i], case2_interp_en))
+                                {
+                                    map_cons = false;
+                                    break;
+                                }
+                                float vc = (p1.occ_vec(2) - p2->vec(2))/(p1.time - p2->time);
+                                double tc = (p2->time + p1.time)/2;        
+                                if (Case2IsOccluded(p, *p2) &&\
+                                    Case2DepthConsistencyCheck(*p2, *depth_map_list[i]) && Case2VelCheck(vi, vc, ti-tc) )
+                                {                            
+                                    cur_occ_times += 1;
+                                    if(cur_occ_times >= occluded_times_thr2)
+                                    {
+                                        p.occu_times = cur_occ_times;
+                                        return true;
+                                    }
+                                    t2 = p2->glob;
+                                    p1 = *p2;
+                                    vi = vc;
+                                    ti = tc;
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                                i--;
+                            }                       
+                        } 
+                        if(cur_occ_times >= occluded_times_thr2) break;
+                    }
+                    if(cur_occ_times >= occluded_times_thr2) break;
+                }
+                if(cur_occ_times >= occluded_times_thr2) break;
+            }
+        }
+    }
+    if (cur_occ_times >= occluded_times_thr2) 
+    {
+        p.occu_times = cur_occ_times;
+        return true;
+    }
+    return false;
+}
+
+bool  DynObjFilter::Case2Enter(point_soph & p, const DepthMap &map_info)
+{
+    if(p.dyn != STATIC)
+    {
+        return false;
+    }
+    float max_depth = 0;
+    float depth_thr2_final = max(cutoff_value, k_depth_max_thr2*(p.vec(2) - d_depth_max_thr2)) + occ_depth_thr2;
+    if(map_info.depth_map[p.position].size() > 0)
+    {
+        const point_soph* max_point = map_info.depth_map[p.position][map_info.max_depth_index_all[p.position]];
+        max_depth = max_point->vec(2); 
+        float delta_t = (p.time - max_point->time);
+        depth_thr2_final = min(depth_thr2_final, v_min_thr2*delta_t);
+    }
+    if(p.vec(2) > max_depth + depth_thr2_final) 
+    {
+        case2_num ++;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
 bool  DynObjFilter::Case2MapConsistencyCheck(point_soph & p, const DepthMap &map_info, bool interp)
 {
-    float cur_hor = map_cons_hor_thr2;
-    float cur_ver = map_cons_ver_thr2;
+    // float cur_hor = map_cons_hor_thr2;
+    // float cur_ver = map_cons_ver_thr2;
     float cur_depth = max(cutoff_value, k_depth_max_thr2*(p.vec(2) - d_depth_max_thr2)) + map_cons_depth_thr2;
     for (int ind_hor = -map_cons_hor_num2; ind_hor <= map_cons_hor_num2; ind_hor ++)
     {

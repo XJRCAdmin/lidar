@@ -29,7 +29,7 @@
 #include <pcl/io/pcd_io.h>
 
 #include <tf2/LinearMath/Quaternion.h>
-#include <tf2_eigen/tf2_eigen.hpp>
+#include <tf2_eigen/tf2_eigen.h>
 
 #include <deque>
 #include <memory>
@@ -60,7 +60,7 @@ int     cur_frame = 0;
 deque<M3D> buffer_rots;
 deque<V3D> buffer_poss;
 deque<double> buffer_times;
-deque<shared_ptr<PointCloudXYZI>> buffer_pcs;
+deque<PointCloudXYZI::Ptr> buffer_pcs;
 
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_pcl_dyn;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_pcl_dyn_extend;
@@ -106,11 +106,10 @@ public:
 private:
     void OdomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
-        Eigen::Quaterniond q = tf2::quatToEigen(msg->pose.pose.orientation);
-        cur_rot = q.matrix();
-        cur_pos << msg->pose.pose.position.x,
-                   msg->pose.pose.position.y,
-                   msg->pose.pose.position.z;
+        Eigen::Isometry3d T;
+        tf2::fromMsg(msg->pose.pose, T);
+        cur_rot = T.rotation();
+        cur_pos = T.translation();
 
         buffer_rots.push_back(cur_rot);
         buffer_poss.push_back(cur_pos);
@@ -121,7 +120,7 @@ private:
 
     void PointsCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
     {
-        shared_ptr<PointCloudXYZI> pc(new PointCloudXYZI());
+        PointCloudXYZI::Ptr pc(new PointCloudXYZI());
         pcl::fromROSMsg(*msg, *pc);
         buffer_pcs.push_back(pc);
     }

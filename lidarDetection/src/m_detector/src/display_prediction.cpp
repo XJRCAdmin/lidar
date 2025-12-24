@@ -29,7 +29,7 @@
 #include <unistd.h> 
 #include <dirent.h> 
 #include <iomanip>
-#include <livox_ros_driver/CustomMsg.h>
+#include <livox_ros_driver2/msg/custom_msg.hpp>
 
 using namespace std;
 
@@ -41,7 +41,7 @@ rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_marker;
 rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_points;
 
 string points_topic = "/velodyne_points_revise";
-string frame_id = "camera_init";
+string frame_id = "odom";
 string pc_folder, label_folder, pred_folder, iou_file;
 
 
@@ -90,7 +90,7 @@ void PointsCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg_in)
 
         int tp = 0, fn = 0, fp = 0, count = 0;
         float iou = 0.0f;
-        for (int i=0; i<points_in->points.size(); i++) 
+        for (size_t i=0; i<points_in->points.size(); i++) 
         {
             pcl::PointXYZI point;
             point.x = points_in->points[i].x;
@@ -175,13 +175,14 @@ void PointsCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg_in)
     
     frames ++;
     // pred_input.seekg(0, std::ios::beg);
-void AviaPointsCallback(const livox_ros_driver::CustomMsg::ConstPtr &msg_in)
+}
+void AviaPointsCallback(const livox_ros_driver2::msg::CustomMsg::SharedPtr& msg_in)
 {   
     PointCloudXYZI::Ptr points_in(new PointCloudXYZI());
     points_in->resize(msg_in->point_num);
     std::cout << "points size: " << msg_in->point_num << std::endl;
     if(msg_in->point_num == 0) return;
-    for(int i = 0; i < msg_in->point_num; i++)
+    for(size_t i = 0; i < msg_in->point_num; i++)
     {
         points_in->points[i].x = msg_in->points[i].x;
         points_in->points[i].y = msg_in->points[i].y;
@@ -223,7 +224,7 @@ void AviaPointsCallback(const livox_ros_driver::CustomMsg::ConstPtr &msg_in)
 
         int tp = 0, fn = 0, fp = 0, count = 0;
         float iou = 0.0f;
-        for (int i=0; i<points_in->points.size(); i++) 
+        for (size_t i=0; i<points_in->points.size(); i++) 
         {
             pcl::PointXYZI point;
             point.x = points_in->points[i].x;
@@ -311,8 +312,6 @@ void AviaPointsCallback(const livox_ros_driver::CustomMsg::ConstPtr &msg_in)
     
 }
 
-    
-}
 int main(int argc, char** argv)
 {
     rclcpp::init(argc, argv);
@@ -321,7 +320,7 @@ int main(int argc, char** argv)
     pc_folder = g_node->declare_parameter<std::string>("dyn_obj/pc_file", "");
     pred_folder = g_node->declare_parameter<std::string>("dyn_obj/pred_file", "");
     points_topic = g_node->declare_parameter<std::string>("dyn_obj/pc_topic", "/velodyne_points");
-    frame_id = g_node->declare_parameter<std::string>("dyn_obj/frame_id", "camera_init");
+    frame_id = g_node->declare_parameter<std::string>("dyn_obj/frame_id", "odom");
 
     int pred_num = 0;
     DIR* pred_dir;

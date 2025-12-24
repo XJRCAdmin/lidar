@@ -559,7 +559,7 @@ void DynObjCluster::oobb_estimate(
         {
             float award = 0.0f;
             for (int k = 0; k < NormVectorMap[i].size(); k++)
-                award += std::sqrt(PointSizeList;
+                award += std::sqrt(PointSizeList[i][k]) / NormVectorMap[i][k](3);
 
             if (award > max_award)
             {
@@ -584,18 +584,17 @@ void DynObjCluster::oobb_estimate(
         direction_main.setZero();
         for (int k = 0; k < NormVectorMap[max_ind].size(); k++)
             direction_main += NormVectorMap[max_ind][k].head<3>() *
-                              PointSizeList[max_ind][k] /
-                              NormVectorMap;
+                                  PointSizeList[max_ind][k] /
+                                  NormVectorMap[max_ind][k](3);
         direction_main.normalize();
     }
 
     if (sec_award > 0)
     {
-        direction_aux.setZero();
-        for (int k = 0; k < NormVectorMap[sec_ind].size(); k++)
-            direction_aux += NormVectorMap[sec_ind][k].head<3>() *
-                             PointSizeList[sec_ind][k] /
-                             NormVectorMap;
+        for (int ite = 0; ite < NormVectorMap[sec_ind].size(); ite++)
+        {
+            direction_aux = direction_aux + NormVectorMap[sec_ind][ite].head(3) * PointSizeList[sec_ind][ite] / NormVectorMap[sec_ind][ite](3);
+        }
         direction_aux.normalize();
     }
 

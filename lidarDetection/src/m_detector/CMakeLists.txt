@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(m_detector)
 
+cmake_policy(SET CMP0074 NEW)
+
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
@@ -32,6 +34,10 @@ find_package(Eigen3 REQUIRED)
 find_package(TBB REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+find_package(livox_ros_driver2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(OpenMP REQUIRED)
+find_package(visualization_msgs REQUIRED)
 
 message(Eigen: ${EIGEN3_INCLUDE_DIR})
 
@@ -42,19 +48,20 @@ include_directories(
   include
 )
 
+
 add_executable(dynfilter src/dynfilter_with_odom.cpp src/DynObjFilter.cpp src/DynObjCluster.cpp)
-ament_target_dependencies(dynfilter rclcpp geometry_msgs nav_msgs sensor_msgs std_msgs tf2 tf2_ros pcl_ros)
-target_link_libraries(dynfilter ${PCL_LIBRARIES} ${OpenCV_LIBS} TBB::tbb Python3::Python)
+ament_target_dependencies(dynfilter rclcpp geometry_msgs nav_msgs sensor_msgs std_msgs tf2 tf2_ros pcl_ros tf2_eigen visualization_msgs)
+target_link_libraries(dynfilter ${PCL_LIBRARIES} ${OpenCV_LIBS} TBB::tbb Python3::Python OpenMP::OpenMP_CXX)
 target_include_directories(dynfilter PRIVATE ${Python3_INCLUDE_DIRS})
 
 add_executable(display_prediction src/display_prediction.cpp)
-ament_target_dependencies(display_prediction rclcpp sensor_msgs pcl_ros)
-target_link_libraries(display_prediction ${PCL_LIBRARIES} ${OpenCV_LIBS} TBB::tbb Python3::Python)
+ament_target_dependencies(display_prediction rclcpp sensor_msgs pcl_ros livox_ros_driver2 visualization_msgs)
+target_link_libraries(display_prediction ${PCL_LIBRARIES} ${OpenCV_LIBS} TBB::tbb Python3::Python OpenMP::OpenMP_CXX)
 target_include_directories(display_prediction PRIVATE ${Python3_INCLUDE_DIRS})
 
 add_executable(cal_recall src/cal_recall_multi.cpp)
 ament_target_dependencies(cal_recall rclcpp)
-target_link_libraries(cal_recall ${PCL_LIBRARIES} ${OpenCV_LIBS} TBB::tbb Python3::Python)
+target_link_libraries(cal_recall ${PCL_LIBRARIES} ${OpenCV_LIBS} TBB::tbb Python3::Python OpenMP::OpenMP_CXX)
 target_include_directories(cal_recall PRIVATE ${Python3_INCLUDE_DIRS})
 
 install(TARGETS

@@ -142,7 +142,7 @@ public:
 
     void PubClusterResult_voxel(
         std::vector<int> &dyn_tag,
-        std_msgs::msg::Header current_header,
+        const std_msgs::msg::Header& current_header,
         bbox_t &bbox,
         double delta,
         std::vector<std::vector<int>> &voxel_clusters,

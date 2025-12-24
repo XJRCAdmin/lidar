@@ -351,7 +351,7 @@ public:
     int cur_point_soph_pointers = 0;
     int max_pointers_num = 0;
     int frame_num_for_rec = 0;
-    std::deque<PointCloudXYZI::Ptr> pcl_his_list;;
+    std::deque<PointCloudXYZI::Ptr> pcl_his_list;     
     PointCloudXYZI::Ptr laserCloudSteadObj;
     PointCloudXYZI::Ptr laserCloudSteadObj_hist;
     PointCloudXYZI::Ptr laserCloudDynObj;
@@ -498,7 +498,5 @@ private:
     std::string out_file;
     std::string out_file_origin;
 
-    std::mutex mtx_case2;
-    std::mutex mtx_case3;
 };
 #endif
