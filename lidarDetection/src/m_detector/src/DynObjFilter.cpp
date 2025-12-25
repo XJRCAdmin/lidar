@@ -711,7 +711,7 @@ void DynObjFilter::Buffer2DepthMap(double cur_time)
                                     *point);
 
                 if (depth_map_list.back()->depth_map[point->position].size() <
-                    max_pixel_points)
+                    static_cast<decltype(depth_map_list.back()->depth_map[point->position].size())>(max_pixel_points))
                 {
                     auto &cell =
                         depth_map_list.back()->depth_map[point->position];
@@ -1267,7 +1267,7 @@ bool  DynObjFilter::Case2(point_soph & p)
         {
             double ti = 0;
             float vi = 0; 
-            float min_hor = occ_hor_thr2, min_ver = occ_ver_thr2;
+            // float min_hor = occ_hor_thr2, min_ver = occ_ver_thr2;
             bool map_cons = true;    
             for (int ind_hor = -occ_hor_num2; ind_hor <= occ_hor_num2; ind_hor ++)
             {
@@ -1280,7 +1280,7 @@ bool  DynObjFilter::Case2(point_soph & p)
                     {
                         continue;
                     }   
-                    for (int k = 0; k < points_in_pixel.size() && map_cons; k++)
+                    for (size_t k = 0; k < points_in_pixel.size() && map_cons; k++)
                     {
                         const point_soph*  p_occ = points_in_pixel[k];                   
                         if(Case2IsOccluded(p_spherical, *p_occ) && Case2DepthConsistencyCheck(*p_occ, *depth_map_list[first_i]))
@@ -1406,7 +1406,7 @@ bool  DynObjFilter::Case2MapConsistencyCheck(point_soph & p, const DepthMap &map
             {
                 continue;
             }   
-            for (int j = 0; j < points_in_pixel.size(); j++)
+            for (size_t j = 0; j < points_in_pixel.size(); j++)
             {
                 const point_soph* point = points_in_pixel[j];
                 if (point->dyn == STATIC && \
@@ -1449,7 +1449,7 @@ bool  DynObjFilter::Case2SearchPointOccludingP(point_soph & p, const DepthMap &m
             {
                 continue;
             }   
-            for (int j = 0; j < points_in_pixel.size(); j++)
+            for (size_t j = 0; j < points_in_pixel.size(); j++)
             {
                 const point_soph* p_cond = points_in_pixel[j];
                 if (Case2IsOccluded(p, *p_cond) && Case2DepthConsistencyCheck(*p_cond, map_info)) 

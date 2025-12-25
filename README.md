@@ -7,4 +7,11 @@
 colcon build --symlink-install
 ```
 
+Debug:
+```
+colcon build \
+  --cmake-args \
+  -DCMAKE_BUILD_TYPE=Debug
+```
+
 - [lidarDetection README](lidarDetection/README.md)

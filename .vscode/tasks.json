@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "colcon: build selected package",
+      "type": "shell",
+      "command": "colcon build --symlink-install --packages-select ${input:package} --cmake-args -DCMAKE_BUILD_TYPE=Debug",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "package",
+      "type": "promptString",
+      "description": "Enter the ROS 2 package name to build",
+      // "default": "lidar_detection"
+      "default": "m_detector"
+    }
+  ]
+}

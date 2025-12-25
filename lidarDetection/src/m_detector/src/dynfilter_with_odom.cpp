@@ -71,8 +71,9 @@ class DynFilterNode : public rclcpp::Node
 public:
     DynFilterNode() : Node("dynfilter_odom")
     {
-        this->declare_parameter<string>("dyn_obj/points_topic", "");
-        this->declare_parameter<string>("dyn_obj/odom_topic", "");
+        // Provide safe non-empty defaults to avoid InvalidTopicNameError
+        this->declare_parameter<string>("dyn_obj/points_topic", "/livox/lidar");
+        this->declare_parameter<string>("dyn_obj/odom_topic", "/Odometry");
         this->declare_parameter<string>("dyn_obj/out_file", "");
         this->declare_parameter<string>("dyn_obj/out_file_origin", "");
 
@@ -81,7 +82,22 @@ public:
         this->get_parameter("dyn_obj/out_file", out_folder);
         this->get_parameter("dyn_obj/out_file_origin", out_folder_origin);
 
-        DynObjFilt->init(shared_from_this());
+        // Fallbacks if parameters are empty (defensive programming)
+        if (points_topic.empty()) {
+            points_topic = "/livox/lidar";
+            RCLCPP_WARN(this->get_logger(),
+                        "Parameter 'dyn_obj/points_topic' not set; defaulting to %s",
+                        points_topic.c_str());
+        }
+        if (odom_topic.empty()) {
+            odom_topic = "/Odometry";
+            RCLCPP_WARN(this->get_logger(),
+                        "Parameter 'dyn_obj/odom_topic' not set; defaulting to %s",
+                        odom_topic.c_str());
+        }
+        RCLCPP_INFO(this->get_logger(), "Subscribing points_topic: %s", points_topic.c_str());
+        RCLCPP_INFO(this->get_logger(), "Subscribing odom_topic: %s", odom_topic.c_str());
+
 
         pub_pcl_dyn_extend = this->create_publisher<sensor_msgs::msg::PointCloud2>(
             "/m_detector/frame_out", 10);
@@ -102,7 +118,10 @@ public:
             std::chrono::milliseconds(10),
             std::bind(&DynFilterNode::TimerCallback, this));
     }
-
+    void initialize()
+    {
+        DynObjFilt->init(this->shared_from_this());
+    }
 private:
     void OdomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
@@ -120,8 +139,38 @@ private:
 
     void PointsCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
     {
+        // Convert robustly: if incoming cloud lacks normal/curvature fields,
+        // map from XYZI and fill normals/time with defaults to avoid field-match errors.
+        auto has_field = [](const sensor_msgs::msg::PointCloud2 &m, const std::string &name) -> bool {
+            for (const auto &f : m.fields) {
+                if (f.name == name) return true;
+            }
+            return false;
+        };
+
+        bool has_normals = has_field(*msg, "normal_x") && has_field(*msg, "normal_y") && has_field(*msg, "normal_z");
+        bool has_curv = has_field(*msg, "curvature");
+
         PointCloudXYZI::Ptr pc(new PointCloudXYZI());
-        pcl::fromROSMsg(*msg, *pc);
+        if (has_normals && has_curv) {
+            // Directly convert to PointXYZINormal
+            pcl::fromROSMsg(*msg, *pc);
+        } else {
+            // Convert from XYZI, then enrich
+            // 先转为中间格式 pcl::PointXYZI，然后遍历每个点，手动将缺少的 normal 和 curvature 字段补零。
+            pcl::PointCloud<pcl::PointXYZI> tmp;
+            pcl::fromROSMsg(*msg, tmp);
+            pc->points.reserve(tmp.points.size());
+            for (const auto &q : tmp.points) {
+                PointType p;
+                p.x = q.x; p.y = q.y; p.z = q.z; p.intensity = q.intensity;
+                p.normal_x = 0.0f; p.normal_y = 0.0f; p.normal_z = 0.0f;
+                p.curvature = 0.0f;  // fallback: no per-point time available
+                pc->points.push_back(p);
+            }
+            pc->width = static_cast<uint32_t>(pc->points.size());
+            pc->height = 1; pc->is_dense = tmp.is_dense;
+        }
         buffer_pcs.push_back(pc);
     }
 
@@ -159,7 +208,9 @@ private:
 int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<DynFilterNode>());
+    auto node = std::make_shared<DynFilterNode>();
+    node->initialize();
+    rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;
 }

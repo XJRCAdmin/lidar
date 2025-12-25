@@ -163,9 +163,15 @@ void PointsCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg_in)
         marker.color.b = 0.0f;
         marker.color.a = 1.0f;
         geometry_msgs::msg::Pose pose;
-        pose.position.x =  points_out->points[0].x;
-        pose.position.y =  points_out->points[0].y;
-        pose.position.z =  points_out->points[0].z;
+        if (!points_out->points.empty()) {
+            pose.position.x =  points_out->points[0].x;
+            pose.position.y =  points_out->points[0].y;
+            pose.position.z =  points_out->points[0].z;
+        } else {
+            pose.position.x = 0.0;
+            pose.position.y = 0.0;
+            pose.position.z = 0.0;
+        }
         ostringstream str;
         str<<"tp: "<<tp<<" fn: "<<fn<<" fp: "<<fp<<" count: "<<count<<" iou: "<<iou;
         marker.text=str.str();
@@ -297,9 +303,15 @@ void AviaPointsCallback(const livox_ros_driver2::msg::CustomMsg::SharedPtr& msg_
         marker.color.b = 0.0f;
         marker.color.a = 1.0f;
         geometry_msgs::msg::Pose pose;
-        pose.position.x =  points_out->points[0].x;
-        pose.position.y =  points_out->points[0].y;
-        pose.position.z =  points_out->points[0].z;
+        if (!points_out->points.empty()) {
+            pose.position.x =  points_out->points[0].x;
+            pose.position.y =  points_out->points[0].y;
+            pose.position.z =  points_out->points[0].z;
+        } else {
+            pose.position.x = 0.0;
+            pose.position.y = 0.0;
+            pose.position.z = 0.0;
+        }
         ostringstream str;
         str<<"tp: "<<tp<<" fn: "<<fn<<" fp: "<<fp<<" count: "<<count<<" iou: "<<iou;
         marker.text=str.str();
@@ -317,21 +329,43 @@ int main(int argc, char** argv)
     rclcpp::init(argc, argv);
     g_node = std::make_shared<rclcpp::Node>("display_prediction");
 
+    // Accept both namespaced and plain parameter names for robustness
     pc_folder = g_node->declare_parameter<std::string>("dyn_obj/pc_file", "");
     pred_folder = g_node->declare_parameter<std::string>("dyn_obj/pred_file", "");
     points_topic = g_node->declare_parameter<std::string>("dyn_obj/pc_topic", "/velodyne_points");
     frame_id = g_node->declare_parameter<std::string>("dyn_obj/frame_id", "odom");
 
+    // Plain names (as used by detector_mid360.launch.py)
+    std::string pc_file_plain = g_node->declare_parameter<std::string>("pc_file", "");
+    std::string pred_file_plain = g_node->declare_parameter<std::string>("pred_file", "");
+    std::string pc_topic_plain = g_node->declare_parameter<std::string>("pc_topic", points_topic);
+    std::string frame_id_plain = g_node->declare_parameter<std::string>("frame_id", frame_id);
+
+    if (pc_folder.empty() && !pc_file_plain.empty()) pc_folder = pc_file_plain;
+    if (pred_folder.empty() && !pred_file_plain.empty()) pred_folder = pred_file_plain;
+    if (points_topic.empty() && !pc_topic_plain.empty()) points_topic = pc_topic_plain;
+    if (frame_id.empty() && !frame_id_plain.empty()) frame_id = frame_id_plain;
+
+    RCLCPP_INFO(g_node->get_logger(), "display_prediction params: pred_folder='%s', pc_folder='%s', points_topic='%s', frame_id='%s'",
+                pred_folder.c_str(), pc_folder.c_str(), points_topic.c_str(), frame_id.c_str());
+
     int pred_num = 0;
-    DIR* pred_dir;
-    pred_dir = opendir(pred_folder.c_str());
-    struct dirent* pred_ptr;
-    while((pred_ptr = readdir(pred_dir)) != NULL)
-    {
-        if(pred_ptr->d_name[0] == '.') {continue;}
-        pred_num++;
+    if (pred_folder.empty()) {
+        RCLCPP_ERROR(g_node->get_logger(), "Parameter 'pred_file'/'dyn_obj/pred_file' is empty; skipping directory scan.");
+    } else {
+        DIR* pred_dir = opendir(pred_folder.c_str());
+        if (!pred_dir) {
+            RCLCPP_ERROR(g_node->get_logger(), "Failed to open prediction folder: '%s'", pred_folder.c_str());
+        } else {
+            struct dirent* pred_ptr;
+            while ((pred_ptr = readdir(pred_dir)) != NULL) {
+                if (pred_ptr->d_name[0] == '.') { continue; }
+                pred_num++;
+            }
+            closedir(pred_dir);
+            RCLCPP_INFO(g_node->get_logger(), "Prediction files counted: %d", pred_num);
+        }
     }
-    closedir(pred_dir);
 
     minus_num = 0;
 

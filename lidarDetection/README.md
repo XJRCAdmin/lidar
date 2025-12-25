@@ -40,3 +40,18 @@ input_ball_topic_ = this->declare_parameter<std::string>("input_ball_topic", "/o
 | 15.0         | 12.77- 13.76      | Raw points: 13252        |
 
 ROI filter 之后就只有几百个点云了,400 300 左右.
+
+# M-Detector
+该package启动需要一定的时间,大概10秒左右,请耐心等待.
+
+输出话题: 
+```bash
+/m_detector/frame_out # 发布聚类后的动态物体点云数据
+/m_detector/point_out # 发布世界坐标系下的动态物体点云数据
+/m_detector/std_points # 发布稳定物体点云数据
+```
+
+论文中的三个case:
+- case1 对象垂直于 LiDAR 激光束方向移动,也就是圆周平动
+- case2 对象沿激光束方向远离传感器移动
+- case3 对象沿激光束方向朝向传感器移动
