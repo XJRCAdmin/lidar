@@ -83,8 +83,9 @@ public:
     for (auto & detection : custom_obstacle_array_msg.detections) {
       // if the object is static in map frame, 将其标记为另一种类型
       if (
-        detection.twist.linear.x <= static_velocity_thresh_ && detection.twist.linear.y <= static_velocity_thresh_ &&
-        detection.twist.linear.z <= static_velocity_thresh_)  // 其实z都是0
+        abs(detection.twist.linear.x) <= static_velocity_thresh_ &&
+        abs(detection.twist.linear.y) <= static_velocity_thresh_ &&
+        abs(detection.twist.linear.z) <= static_velocity_thresh_)  // 其实z都是0
       {
         detection.twist.linear.x = 0.0;  // 将速度置0
         detection.twist.linear.y = 0.0;

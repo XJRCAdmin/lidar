@@ -8,9 +8,10 @@ Panels:
         - /Status1
         - /Grid1
         - /TotalMarker1
-        - /TotalMarker1/Status1
         - /DynamicObstacle1
         - /staticObstacle1
+        - /DynamicArrayMarker1
+        - /DynamicTestMarker1
       Splitter Ratio: 0.5
     Tree Height: 745
   - Class: rviz_common/Selection
@@ -238,7 +239,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 163
+      Max Intensity: 152
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: CloudRegistered
@@ -260,7 +261,7 @@ Visualization Manager:
       Enabled: true
       Name: DynamicObstacle
       Namespaces:
-        dynamic_obstacle_bboxes: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -279,6 +280,32 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /static_obstacle_markers
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: DynamicArrayMarker
+      Namespaces:
+        dynamic_obstacle_bboxes: true
+        dynamic_obstacle_text: true
+        dynamic_obstacle_velocity: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /dynamic_obstacle_array_markers
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: DynamicTestMarker
+      Namespaces:
+        dynamic_obstacle_text: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /dynamic_obstacle_text_markers
       Value: true
   Enabled: true
   Global Options:
@@ -323,7 +350,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.0100505352020264
+      Distance: 0.015735194087028503
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -338,10 +365,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9522250294685364
+      Pitch: 1.0447968244552612
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: -2.679096221923828
+      Yaw: 3.2640857696533203
     Saved: ~
 Window Geometry:
   Displays:
@@ -357,5 +384,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1920
-  X: 46
-  Y: 277
+  X: -62
+  Y: 119

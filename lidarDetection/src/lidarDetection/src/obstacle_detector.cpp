@@ -412,6 +412,12 @@ void ObstacleDetectorNode::publishDetectedObjects(
     Box box = USE_PCA_BOX ? obstacle_detector->pcaBoundingBox(cluster, obstacle_id_)
                           : obstacle_detector->axisAlignedBoundingBox(cluster, obstacle_id_);
 
+    // RCLCPP_INFO(
+    //   this->get_logger(),
+    //   "Created Box ID %zu: position=(%.2f,%.2f,%.2f), dimension=(%.2f,%.2f,%.2f), cluster_points=%zu", obstacle_id_,
+    //   box.position[0], box.position[1], box.position[2], box.dimension[0], box.dimension[1], box.dimension[2],
+    //   cluster->size());
+
     std::vector<geometry_msgs::msg::Point32> all_candidate_points =
       calculateBoxVertices(box.position, box.dimension, box.quaternion);
 
@@ -628,6 +634,7 @@ lidar_detection::msg::ObstacleDetection ObstacleDetectorNode::boxToDetection3D(
   lidar_detection::msg::ObstacleDetection obstacle_detection;
   obstacle_detection.detection.header = header;
 
+  obstacle_detection.id = std::to_string(box.id);
   obstacle_detection.detection.bbox.center.position.x = box.position(0);
   obstacle_detection.detection.bbox.center.position.y = box.position(1);
   obstacle_detection.detection.bbox.center.position.z = box.position(2);

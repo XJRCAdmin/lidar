@@ -1,5 +1,5 @@
 import numpy as np
-import sensor_msgs.point_cloud2 as pc2
+from sensor_msgs_py import point_cloud2 as pc2
 
 
 def pointcloud2_to_array(cloud_msg):

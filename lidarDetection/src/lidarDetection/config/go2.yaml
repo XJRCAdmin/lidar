@@ -10,12 +10,12 @@ obstacle_detector_node:
     bbox_target_frame: "lidar_body"
     
     # 滤去自身点云
-    min_x: -0.05
-    min_y: -0.05
-    min_z: -0.05
-    max_x: 0.05
-    max_y: 0.05
-    max_z: 0.05
+    min_x: -0.02
+    min_y: -0.02
+    min_z: -0.02
+    max_x: 0.02
+    max_y: 0.02
+    max_z: 0.02
     
     # LiDAR相对于robot的安装位置和姿态,也可以改launch中的
     rotate_x: 0.0        # X轴平移 (米) - 前后位置, 范围: [-10, 10]
@@ -28,14 +28,14 @@ obstacle_detector_node:
     use_pca_box: true          # 使用PCA边界框 (vs 轴对齐边界框)
     use_tracking: true         # 启用目标跟踪功能
     
-    voxel_grid_size: 0.2       # 体素网格大小 (米) - 点云下采样分辨率, 范围: [0.05, 1.0]
+    voxel_grid_size: 0.1       # 体素网格大小 (米) - 点云下采样分辨率, 范围: [0.05, 1.0]
     
     # 只检测该区域内的点云, 调大会导致墙体一起被纳入
     roi_max_x: 5.0       # point1前方 (米), 范围: [0.0, 8.0]
     roi_max_y: 5.0       # point1左侧 (米), 范围: [0.0, 8.0]
-    roi_max_z: 1.8      # point1向上 (米), 范围: [0.0, 3.0]
-    roi_min_x: -5.0      # point2后方 (米) - 负值, 范围: [-8.0, 0.0]
-    roi_min_y: -5.0      # point2右侧 (米) - 负值, 范围: [-8.0, 0.0]
+    roi_max_z: 1.5      # point1向上 (米), 范围: [0.0, 3.0]
+    roi_min_x: -4.5      # point2后方 (米) - 负值, 范围: [-8.0, 0.0]
+    roi_min_y: -4.5      # point2右侧 (米) - 负值, 范围: [-8.0, 0.0]
     roi_min_z: -0.5      # point2向下 (米) - 负值, 范围: [-1.0, 0.0]
     
     ground_segment: "RANSAC"   # 地面分割算法类型
@@ -47,8 +47,8 @@ obstacle_detector_node:
     cluster_min_size: 10       # 聚类最小点数 - 过滤小噪声, 范围: [3, 50]
     
     # 可以设置大一些, 以免漏检
-    displacement_threshold: 1.0   # 位移阈值 (米) - 帧间最大移动距离, 范围: [0.1, 5.0]
-    iou_threshold: 1.0            # IoU阈值 - 边界框重叠度匹配, 范围: [0.1, 1.0]
+    displacement_threshold: 2.0   # 位移阈值 (米) - 帧间最大移动距离, 范围: [0.1, 5.0]
+    iou_threshold: 0.8            # IoU阈值 - 边界框重叠度匹配越大越宽松, 范围: [0.1, 1.0]
     
     # 可以适当调节, 影响离群点滤波效果
     enable_statistical_filter: true     # 启用统计离群点滤波

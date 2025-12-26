@@ -367,9 +367,9 @@ void ObstacleDetector<PointT>::obstacleTracking(
   const std::vector<Box> & prev_boxes, std::vector<Box> & curr_boxes, const float displacement_thresh,
   const float iou_thresh)
 {
-  auto logger = rclcpp::get_logger("obstacle_detector");  
-  RCLCPP_INFO(
-    logger, "box tracking between %zu previous boxes and %zu current boxes", prev_boxes.size(), curr_boxes.size());
+  auto logger = rclcpp::get_logger("obstacle_detector");
+  // RCLCPP_INFO(
+  //   logger, "box tracking between %zu previous boxes and %zu current boxes", prev_boxes.size(), curr_boxes.size());
 
   if (curr_boxes.empty() || prev_boxes.empty()) {
     return;
@@ -396,7 +396,7 @@ void ObstacleDetector<PointT>::obstacleTracking(
 
     // Update the unmatched count for each UKF state
     std::unordered_set<int> matched_ids;
-    for (int j = 0; j < static_cast<int>(matches.size()); ++j) {  // 当前帧和上一帧的障碍物成功匹配上
+    for (int j = 0; j < static_cast<int>(matches.size()); ++j) {
       // find the index of the previous box that the current box corresponds to
       const auto pre_id = pre_ids[matches[j]];
       const auto pre_index = searchBoxIndex(prev_boxes, pre_id);
@@ -472,12 +472,43 @@ void ObstacleDetector<PointT>::obstacleTracking(
     }
   }
 }
-////
+
+// template <typename PointT>
+// bool ObstacleDetector<PointT>::compareBoxes(
+//   const Box & a, const Box & b, const float displacement_thresh, const float iou_thresh)
+// {
+//   auto logger = rclcpp::get_logger("obstacle_detector");
+//   const float dis = std::sqrt(
+//     (a.position[0] - b.position[0]) * (a.position[0] - b.position[0]) +
+//     (a.position[1] - b.position[1]) * (a.position[1] - b.position[1]) +
+//     (a.position[2] - b.position[2]) * (a.position[2] - b.position[2]));
+
+//   const float a_max_dim = std::max(a.dimension[0], std::max(a.dimension[1], a.dimension[2]));
+//   const float b_max_dim = std::max(b.dimension[0], std::max(b.dimension[1], b.dimension[2]));
+//   const float ctr_dis = dis / std::min(a_max_dim, b_max_dim);
+
+//   const float x_dim = std::abs(2 * (a.dimension[0] - b.dimension[0]) / (a.dimension[0] + b.dimension[0]));
+//   const float y_dim = std::abs(2 * (a.dimension[1] - b.dimension[1]) / (a.dimension[1] + b.dimension[1]));
+//   const float z_dim = std::abs(2 * (a.dimension[2] - b.dimension[2]) / (a.dimension[2] + b.dimension[2]));
+
+//   // RCLCPP_WARN(
+//   //   logger,
+//   //   "Comparing Box A ID: %d with Box B ID: %d | Center Displacement: %.3f (thresh: %.3f) | "
+//   //   "X Dim Diff: %.3f (thresh: %.3f) | Y Dim Diff: %.3f (thresh: %.3f) | "
+//   //   "Z Dim Diff: %.3f (thresh: %.3f)",
+//   //   a.id, b.id, ctr_dis, displacement_thresh, x_dim, iou_thresh, y_dim, iou_thresh, z_dim, iou_thresh);
+
+//   return (
+//     ctr_dis <= displacement_thresh && x_dim <= iou_thresh && y_dim <= iou_thresh && z_dim <= iou_thresh &&
+//     isPointInBoundingBox(a.position, b));
+// }
+
 template <typename PointT>
 bool ObstacleDetector<PointT>::compareBoxes(
   const Box & a, const Box & b, const float displacement_thresh, const float iou_thresh)
 {
   auto logger = rclcpp::get_logger("obstacle_detector");
+
   const float dis = std::sqrt(
     (a.position[0] - b.position[0]) * (a.position[0] - b.position[0]) +
     (a.position[1] - b.position[1]) * (a.position[1] - b.position[1]) +
@@ -485,22 +516,23 @@ bool ObstacleDetector<PointT>::compareBoxes(
 
   const float a_max_dim = std::max(a.dimension[0], std::max(a.dimension[1], a.dimension[2]));
   const float b_max_dim = std::max(b.dimension[0], std::max(b.dimension[1], b.dimension[2]));
-  const float ctr_dis = dis / std::min(a_max_dim, b_max_dim);
+  const float max_dim = std::max(a_max_dim, b_max_dim);
+  const float ctr_dis = dis / max_dim;
 
   const float x_dim = std::abs(2 * (a.dimension[0] - b.dimension[0]) / (a.dimension[0] + b.dimension[0]));
   const float y_dim = std::abs(2 * (a.dimension[1] - b.dimension[1]) / (a.dimension[1] + b.dimension[1]));
   const float z_dim = std::abs(2 * (a.dimension[2] - b.dimension[2]) / (a.dimension[2] + b.dimension[2]));
 
-  RCLCPP_WARN(
+  RCLCPP_INFO(
     logger,
     "Comparing Box A ID: %d with Box B ID: %d | Center Displacement: %.3f (thresh: %.3f) | "
     "X Dim Diff: %.3f (thresh: %.3f) | Y Dim Diff: %.3f (thresh: %.3f) | "
     "Z Dim Diff: %.3f (thresh: %.3f)",
     a.id, b.id, ctr_dis, displacement_thresh, x_dim, iou_thresh, y_dim, iou_thresh, z_dim, iou_thresh);
 
-  return (
-    ctr_dis <= displacement_thresh && x_dim <= iou_thresh && y_dim <= iou_thresh && z_dim <= iou_thresh &&
-    isPointInBoundingBox(a.position, b));
+  bool match = (ctr_dis <= displacement_thresh && x_dim <= iou_thresh && y_dim <= iou_thresh && z_dim <= iou_thresh);
+
+  return match;
 }
 
 template <typename PointT>
