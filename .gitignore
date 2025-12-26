@@ -2,3 +2,4 @@ build/
 install/
 log/
 .marscode/
+lidarDetection/labels/*.label

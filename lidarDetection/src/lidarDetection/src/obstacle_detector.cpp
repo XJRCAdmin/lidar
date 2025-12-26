@@ -345,7 +345,7 @@ void ObstacleDetectorNode::lidarPointsCallback(const sensor_msgs::msg::PointClou
 
   const auto end_time = std::chrono::steady_clock::now();
   const auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
- 
+
   FrequencyDebug(start_time, end_time, logger);
 }
 
@@ -530,8 +530,8 @@ std::vector<geometry_msgs::msg::Point32> ObstacleDetectorNode::selectRepresentat
     result.push_back(all_points[idx]);
   }
 
-  RCLCPP_INFO(
-    this->get_logger(), "Selected %zu representative corners from %zu total points", result.size(), all_points.size());
+  // RCLCPP_INFO(
+  //   this->get_logger(), "Selected %zu representative corners from %zu total points", result.size(), all_points.size());
   return result;
 }
 

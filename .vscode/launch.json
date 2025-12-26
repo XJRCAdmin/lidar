@@ -6,7 +6,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/install/${input:package}/lib/${input:package}/${input:node}",
-      "args": [],
+      "args": ["launch", "m_detector", "detector_mid360.launch.py"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [

@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Human Detection Node -->
+    <node name="human_detector" pkg="go2_mid360_det" type="main.py" output="screen">
+        <!-- Point cloud processing parameters -->
+        <param name="buffer_size" value="20"/>
+        <param name="processing_rate" value="10.0"/>
+        <param name="detection_range" value="10.0"/>
+        <param name="voxel_size" value="0.1"/>
+        <param name="ground_removal_height" value="-0.5"/>
+
+        <!-- Human characteristics -->
+        <param name="human_height_min" value="1.3"/>
+        <param name="human_height_max" value="2.2"/>
+        <param name="human_width_max" value="1.0"/>
+
+        <!-- DBSCAN clustering parameters -->
+        <param name="dbscan_eps" value="0.3"/>
+        <param name="dbscan_min_samples" value="20"/>
+
+        <!-- Motion detection -->
+        <param name="motion_threshold" value="0.2"/>
+        <param name="min_detection_points" value="50"/>
+
+        <!-- Tracking parameters -->
+        <param name="max_tracking_distance" value="2.0"/>
+        <param name="tracker_timeout" value="2.0"/>
+
+        <!-- Frame IDs -->
+        <param name="world_frame" value="odom"/>
+        <param name="lidar_frame" value="livox_frame"/>
+
+    </node>
+    <node pkg="tf" type="static_transform_publisher" 
+          name="map_to_odom" 
+          args="0 0 0 0 0 0 odom livox_frame 100"/>
+
+    <!-- RViz visualization -->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find go2_mid360_det)/rviz/human_detection.rviz" if="$(arg rviz)"/>
+
+    <!-- Arguments -->
+    <arg name="rviz" default="true"/>
+</launch>

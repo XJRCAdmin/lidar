@@ -34,8 +34,8 @@ obstacle_detector_node:
     roi_max_x: 5.0       # point1前方 (米), 范围: [0.0, 8.0]
     roi_max_y: 5.0       # point1左侧 (米), 范围: [0.0, 8.0]
     roi_max_z: 1.8      # point1向上 (米), 范围: [0.0, 3.0]
-    roi_min_x: -4.0      # point2后方 (米) - 负值, 范围: [-8.0, 0.0]
-    roi_min_y: -4.0      # point2右侧 (米) - 负值, 范围: [-8.0, 0.0]
+    roi_min_x: -5.0      # point2后方 (米) - 负值, 范围: [-8.0, 0.0]
+    roi_min_y: -5.0      # point2右侧 (米) - 负值, 范围: [-8.0, 0.0]
     roi_min_z: -0.5      # point2向下 (米) - 负值, 范围: [-1.0, 0.0]
     
     ground_segment: "RANSAC"   # 地面分割算法类型
