@@ -523,12 +523,12 @@ bool ObstacleDetector<PointT>::compareBoxes(
   const float y_dim = std::abs(2 * (a.dimension[1] - b.dimension[1]) / (a.dimension[1] + b.dimension[1]));
   const float z_dim = std::abs(2 * (a.dimension[2] - b.dimension[2]) / (a.dimension[2] + b.dimension[2]));
 
-  RCLCPP_INFO(
-    logger,
-    "Comparing Box A ID: %d with Box B ID: %d | Center Displacement: %.3f (thresh: %.3f) | "
-    "X Dim Diff: %.3f (thresh: %.3f) | Y Dim Diff: %.3f (thresh: %.3f) | "
-    "Z Dim Diff: %.3f (thresh: %.3f)",
-    a.id, b.id, ctr_dis, displacement_thresh, x_dim, iou_thresh, y_dim, iou_thresh, z_dim, iou_thresh);
+  // RCLCPP_INFO(
+  //   logger,
+  //   "Comparing Box A ID: %d with Box B ID: %d | Center Displacement: %.3f (thresh: %.3f) | "
+  //   "X Dim Diff: %.3f (thresh: %.3f) | Y Dim Diff: %.3f (thresh: %.3f) | "
+  //   "Z Dim Diff: %.3f (thresh: %.3f)",
+  //   a.id, b.id, ctr_dis, displacement_thresh, x_dim, iou_thresh, y_dim, iou_thresh, z_dim, iou_thresh);
 
   bool match = (ctr_dis <= displacement_thresh && x_dim <= iou_thresh && y_dim <= iou_thresh && z_dim <= iou_thresh);
 

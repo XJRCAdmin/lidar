@@ -14,4 +14,6 @@ colcon build \
   -DCMAKE_BUILD_TYPE=Debug
 ```
 
+
 - [lidarDetection README](lidarDetection/README.md)
+- [CHANGELOG](lidarDetection/CHANGELOG.md)

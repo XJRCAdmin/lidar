@@ -23,6 +23,8 @@ private:
   std::string output_topic_robot_state_;
   std::string input_relative_ball_topic_;
   std::string output_relative_ball_topic_;
+  std::string input_static_obstacle_topic_;
+  std::string output_static_obstacle_topic_;
   std::string input_map_ball_topic_;
   std::string output_map_ball_topic_;
   std::string source_frame_;
@@ -31,6 +33,8 @@ private:
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Publisher<sensing_msgs::msg::RobotState>::SharedPtr robot_state_pub_;
   rclcpp::Subscription<lidar_detection::msg::ObstacleDetectionArray>::SharedPtr relative_ball_sub_;
+  rclcpp::Publisher<lidar_detection::msg::ObstacleDetectionArray>::SharedPtr static_obstacle_pub_;
+  rclcpp::Subscription<lidar_detection::msg::ObstacleDetectionArray>::SharedPtr static_obstacle_sub_;
   rclcpp::Publisher<sensing_msgs::msg::BallRelative>::SharedPtr relative_ball_pub_;
   rclcpp::Subscription<lidar_detection::msg::ObstacleDetectionArray>::SharedPtr map_ball_sub_;
   rclcpp::Publisher<sensing_msgs::msg::BallState>::SharedPtr map_ball_pub_;
@@ -43,13 +47,20 @@ public:
   {
     input_topic_odom_ = this->declare_parameter<std::string>("input_topic_odom", "/odom_base_link");
     output_topic_robot_state_ = this->declare_parameter<std::string>("output_topic_robot_state", "/robot_state");
-    // 输入的球相对位置话题,目前使用的是obstacle_information_to_baselink的话题,将所有障碍物当作"球"处理了,后续需要调整成真正的球检测话题
+    // 输入的球相对位置话题,目前使用的是dynamic_obstacle_to_baselink的话题,将所有动态障碍物当作"球"处理了,后续需要调整成真正的球检测话题
     input_relative_ball_topic_ =
-      this->declare_parameter<std::string>("input_relative_ball_topic", "/obstacle_information_to_baselink");
+      this->declare_parameter<std::string>("input_relative_ball_topic", "/dynamic_obstacle_in_baselink");
     output_relative_ball_topic_ = this->declare_parameter<std::string>("output_relative_ball_topic", "/ball_relative");
-    //下面两行同理
+
+    // 静态障碍物
+    input_static_obstacle_topic_ =
+      this->declare_parameter<std::string>("input_static_obstacle_topic", "/static_obstacle_in_baselink");
+    output_static_obstacle_topic_ =
+      this->declare_parameter<std::string>("output_static_obstacle_topic", "/static_baselink_obstacle");
+
+    //下面两行同理,用动态障碍物表示"球"在map系下的位置
     input_map_ball_topic_ =
-      this->declare_parameter<std::string>("input_map_ball_topic", "/obstacle_information_to_baselink");
+      this->declare_parameter<std::string>("input_map_ball_topic", "/dynamic_obstacle_in_baselink");
     output_map_ball_topic_ = this->declare_parameter<std::string>("output_map_ball_topic", "/ball_map");
 
     source_frame_ = this->declare_parameter<std::string>("source_frame", "base_link");
@@ -68,9 +79,20 @@ public:
       input_relative_ball_topic_, 10, std::bind(&InterfaceNode::ObstacleRelativeCallback, this, std::placeholders::_1));
     relative_ball_pub_ = this->create_publisher<sensing_msgs::msg::BallRelative>(output_relative_ball_topic_, 10);
 
+    // 静态障碍物
+    static_obstacle_sub_ = this->create_subscription<lidar_detection::msg::ObstacleDetectionArray>(
+      input_static_obstacle_topic_, 10, std::bind(&InterfaceNode::ObstacleStaticCallback, this, std::placeholders::_1));
+    static_obstacle_pub_ = this->create_publisher<lidar_detection::msg::ObstacleDetectionArray>(
+      output_static_obstacle_topic_, 10);  //这里使用的消息是自定义的消息,发布了一ros帧下检测到的所有静态障碍物的信息
+
     map_ball_sub_ = this->create_subscription<lidar_detection::msg::ObstacleDetectionArray>(
       input_map_ball_topic_, 10, std::bind(&InterfaceNode::ObstacleMapCallback, this, std::placeholders::_1));
     map_ball_pub_ = this->create_publisher<sensing_msgs::msg::BallState>(output_map_ball_topic_, 10);
+  }
+
+  void ObstacleStaticCallback(const lidar_detection::msg::ObstacleDetectionArray::SharedPtr obstacle_msg)
+  {
+    static_obstacle_pub_->publish(*obstacle_msg);
   }
 
   void odomCallback(const nav_msgs::msg::Odometry::SharedPtr odom_msg)
@@ -103,7 +125,7 @@ public:
         best_index = i;
       }
     }
-
+    // 填充并发布消息
     const auto & best_detection = ball_msg->detections[best_index];
     sensing_msgs::msg::BallRelative msg;
     msg.header = best_detection.detection.header;

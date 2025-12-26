@@ -23,12 +23,15 @@ private:
 
   std::string obstacle_lidar_topic_;
   std::string obstacle_baselink_topic_;
+  std::string dynamic_obstacle_baselink_topic_;
+  std::string static_obstacle_baselink_topic_;
   std::string source_frame_;
   std::string target_frame_;
   std::string transition_frame_;
   double static_velocity_thresh_ = 0.01;
   rclcpp::Subscription<lidar_detection::msg::ObstacleDetectionArray>::SharedPtr obstacle_lidar_sub_;
-  rclcpp::Publisher<lidar_detection::msg::ObstacleDetectionArray>::SharedPtr obstacle_to_baselink_pub_;
+  rclcpp::Publisher<lidar_detection::msg::ObstacleDetectionArray>::SharedPtr static_obstacle_to_baselink_pub_;
+  rclcpp::Publisher<lidar_detection::msg::ObstacleDetectionArray>::SharedPtr dynamic_obstacle_to_baselink_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr static_obstacle_markers_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr dynamic_obstacle_text_markers_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr dynamic_obstacle_cube_markers_pub_;
@@ -38,8 +41,10 @@ public:
   ObstacleToBaselinkNode() : Node("obstacle_to_baselink_node"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
   {
     obstacle_lidar_topic_ = this->declare_parameter<std::string>("obstacle_lidar_topic", "/detected_objects");
-    obstacle_baselink_topic_ =
-      this->declare_parameter<std::string>("obstacle_baselink_topic", "/obstacle_information_to_baselink");
+    dynamic_obstacle_baselink_topic_ =
+      this->declare_parameter<std::string>("dynamic_obstacle_baselink_topic", "/dynamic_obstacle_in_baselink");
+    static_obstacle_baselink_topic_ =
+      this->declare_parameter<std::string>("static_obstacle_baselink_topic", "/static_obstacle_in_baselink");
     source_frame_ = this->declare_parameter<std::string>("source_frame", "lidar_body");
     transition_frame_ =
       this->declare_parameter<std::string>("transition_frame", "map");  // 借助map系滤去相对于map系静止的物体
@@ -49,8 +54,11 @@ public:
 
     obstacle_lidar_sub_ = this->create_subscription<lidar_detection::msg::ObstacleDetectionArray>(
       obstacle_lidar_topic_, 10, std::bind(&ObstacleToBaselinkNode::ObstacleCallback, this, std::placeholders::_1));
-    obstacle_to_baselink_pub_ =
-      this->create_publisher<lidar_detection::msg::ObstacleDetectionArray>(obstacle_baselink_topic_, 100);
+    dynamic_obstacle_to_baselink_pub_ =
+      this->create_publisher<lidar_detection::msg::ObstacleDetectionArray>(dynamic_obstacle_baselink_topic_, 100);
+    static_obstacle_to_baselink_pub_ =
+      this->create_publisher<lidar_detection::msg::ObstacleDetectionArray>(static_obstacle_baselink_topic_, 100);
+    // 供rviz使用的可视化话题
     static_obstacle_markers_pub_ =
       this->create_publisher<visualization_msgs::msg::MarkerArray>("/static_obstacle_markers", 1000);
     dynamic_obstacle_text_markers_pub_ =
@@ -107,9 +115,10 @@ public:
     visualization_msgs::msg::MarkerArray dynamic_obstacle_cube_markers =
       DynamicObstacleCubeMarker(dynamic_obstacle_msgs);
 
-    obstacle_to_baselink_pub_->publish(baselink_static_obstacle_msgs);
-    obstacle_to_baselink_pub_->publish(baselink_dynamic_obstacle_msgs);
+    static_obstacle_to_baselink_pub_->publish(baselink_static_obstacle_msgs);
+    dynamic_obstacle_to_baselink_pub_->publish(baselink_dynamic_obstacle_msgs);
 
+    // 可视化
     static_obstacle_markers_pub_->publish(static_obstacle_markers);
     dynamic_obstacle_cube_markers_pub_->publish(dynamic_obstacle_cube_markers);
     dynamic_obstacle_text_markers_pub_->publish(dynamic_obstacle_text_markers);
